@@ -1,8 +1,9 @@
 import os
+import secrets
 
 class Config:
     #import secrets --> secrets.token_hex(16)
-    SECRET_KEY = 'bb8660b6e81499a8bf47b75844cc8afc'
+    SECRET_KEY = secrets.token_hex(16)
     SQLALCHEMY_DATABASE_URI = 'sqlite:///site.db'
     #SECRET_KEY = os.environ.get('SECRET_KEY')
     #SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI') 
