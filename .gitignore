@@ -1,0 +1,7 @@
+*.db
+pyvenv.cfg
+/include/
+/Scripts/
+/Lib/
+#!/flaskblog/
+/flaskblog/static/profile_pics/

@@ -1,0 +1,135 @@
+{% extends "layout.html" %}
+{% block sidebar %}{% endblock sidebar %}
+
+{% block left %}
+{% block content %}
+    
+      <div class="row">
+        <div class="col-md-6"><h1>Capstone Smart Building</h1></div>
+        <div class="col-md-4">
+          <!-- Room list 1 2 3 -->
+          <h3>Room List</h3>
+          <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <a class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" href="#pills-home" role="tab" aria-controls="pills-home" aria-selected="true">Room 1</a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="pills-profile-tab" data-bs-toggle="pill" href="#pills-profile" role="tab" aria-controls="pills-profile" aria-selected="false">Room 2</a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="pills-contact-tab" data-bs-toggle="pill" href="#pills-contact" role="tab" aria-controls="pills-contact" aria-selected="false">Room 3</a>
+            </li>
+          </ul>
+        </div>
+
+        
+      </div>
+      
+        
+        <div class="tab-content" id="pills-tabContent">
+          <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">Displays room 1</div>
+          <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">Displays room 2</div>
+          <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">Displays room 3</div>
+        </div>
+      
+      <!-- Room Content -->
+      <div class="container-fluid">
+        <div class="row">
+        <!--Camera --> 
+        <article class="media content-section col-md-4">
+          <div class="row">
+              <div class="col-lg  offset-lg">
+                  <h4 class="article-metadata mt-2 mb-2">Camera Stream</h4>
+                  <img src="{{ url_for('cam.video_feed') }}" width="100%">
+                  Person Count: {{pc}}
+              </div>
+          </div>
+        </article>
+        <!--ESP8266-->
+        <article class="media content-section col-md-4">
+          <div class="row">
+            <div class="col-lg offset-lg">
+              <h4 class="article-metadata mt-2 mb-2">ESP8266 MQTT</h4>
+              {% for pin in pins %}
+                <h5>{{ pins[pin].name }}
+                {% if pins[pin].state == 'True' %}
+                  is currently <strong>on</strong></h5><div class="row"><div class="col-md-2"><a href="/esp8266/{{pin}}/0" class="btn btn-block-sm btn-default" role="button">Turn off</a></div></div>
+                {% else %}
+                  is currently <strong>off</strong></h5><div class="row"><div class="col-md-2"><a href="/esp8266/{{pin}}/1" class="btn btn-block-sm btn-primary" role="button">Turn on</a></div></div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            
+            <div class="row offset-lg mt-3">
+              <!-- Socket real time -->
+              <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.1/socket.io.js"></script>
+              <script type="text/javascript" charset="utf-8">
+                $(document).ready(function() {
+                    //connect socket
+                    var socket = io.connect('http://' + document.domain + ':' + location.port);
+                    
+                    //receive details
+                  socket.on('connect', function() {
+                      socket.emit('my event', {data: 'I\'m connected!'});
+                  });
+                  socket.on('dht_temperature', function(msg) {
+                      var nDate = new Date();
+                      var month = nDate.getMonth()+1;
+                      $('#readingsUpdated').text(nDate.getDate() + '/' + nDate.getMonth() + '/' + nDate.getFullYear() + ' ' +
+                                                  nDate.getHours() + 'h:' + nDate.getMinutes() +'m:' + nDate.getSeconds() + 's').html();
+                      $('#temperature').text(msg.data).html();
+                      socket.emit('my event1', {data: 'I\'m Temperature!'});
+                    });
+                    socket.on('dht_humidity', function(msg) {
+                      $('#humidity').text(msg.data).html();
+                      socket.emit('my event2', {data: 'I\'m Humidity!'});
+                    });
+                });
+              </script>
+              <p>Sensor Publish (updated <span id="readingsUpdated"></span>)</p>
+              <p>Temperature: <span id="temperature"></span>ºC</p>
+              <p>Humidity: <span id="humidity"></span>%</p>
+            </div>
+          </div>
+        </article>
+        <!--Room Info-->
+        <article class="media content-section col-md-4">
+          <div class="row">
+            <div class="col-lg  offset-lg">
+              <h4 class="article-metadata mt-2 mb-2">Room Info</h4>
+              <p>
+                Office Room 1
+                <h5>Devices:</h5>
+                  <ul>Sensor DHT11</ul>
+                  <ul>Camera: webcam</ul>
+                  <ul>Output: LED lamp</ul>
+              </p>
+            </div>
+          </div>
+        </article>
+        </div>
+      
+        <div class="row">
+          <div class="col-sm-6">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Special title treatment</h5>
+                <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                <a href="#" class="btn btn-primary">Go somewhere</a>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Special title treatment</h5>
+                <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                <a href="#" class="btn btn-primary">Go somewhere</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+{% endblock content %}
+{%endblock left%}
