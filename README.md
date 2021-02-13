@@ -4,6 +4,10 @@ Project for making Smart building IoT. Contains Show camera, temperature sensor,
 ## Goal
 - Make a full functioning dashboard for IoT command center:
 
+## Device Nodes
+- IP Camera
+- NodeMCU ESP8266 (sensor/actuator)
+
 ## Features
 1. Show camera
 2. Device auto/manual input (currently LED as output)
