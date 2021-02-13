@@ -1,5 +1,8 @@
 *.db
+
 pyvenv.cfg
+webdevflask_bp2.txt
+
 /include/
 /Scripts/
 /Lib/
