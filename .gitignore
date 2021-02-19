@@ -1,9 +1,9 @@
 # specific file formats
 *.db
-*.pyc
 
 # caches
-*/__pycache__/*
+__pycache__/
+*.pyc
 
 # folders (venv related)
 /include/
