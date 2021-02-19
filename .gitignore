@@ -1,10 +1,17 @@
+# specific file formats
 *.db
+*.pyc
 
-pyvenv.cfg
-webdevflask_bp2.txt
+# caches
+*/__pycache__/*
 
+# folders (venv related)
 /include/
 /Scripts/
 /Lib/
+pyvenv.cfg
+webdevflask_bp.txt
+
+#static
 #!/flaskblog/
 /flaskblog/static/profile_pics/

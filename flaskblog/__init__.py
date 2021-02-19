@@ -4,7 +4,9 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from flask_mail import Mail
 from flaskblog.config import Config
+from flask_socketio import SocketIO
 
+socketio = SocketIO()   #updated
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
@@ -30,4 +32,5 @@ def create_app(config_class=Config):
     app.register_blueprint(main)
     app.register_blueprint(cam)
 
+    socketio(app, ping_interval=5, ping_timeout=10) #updated for socket
     return app

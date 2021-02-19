@@ -1,12 +1,16 @@
 import os
 from flask import render_template, url_for, flash, redirect, request, abort, Response, Blueprint
 from flaskblog.cam.camera import VideoCamera
+from flaskblog import socketio
 import cv2
 import paho.mqtt.client as mqtt
 from flask_socketio import SocketIO, emit
 #from flask_cors import CORS
+import eventlet
 
+eventlet.monkey_patch()
 cam = Blueprint('cam', __name__)
+#socketio = SocketIO(cam, ping_interval=5, ping_timeout=10)
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -50,7 +54,7 @@ templateData = {
 # to camera page
 @cam.route("/")
 def camera():
-    return render_template('camera.html', title='Camera', **templateData)
+    return render_template('camera.html', async_mode=socketio.async_mode, title='Camera', **templateData)
 
 # stream camera
 camera = cv2.VideoCapture(0)
@@ -84,17 +88,13 @@ def video_feed():
 @app.app_errorhandler(404)
 def error_404(error):
     return render_template('errors/404.html'), 404
-
-
 @app.app_errorhandler(403)
 def error_403(error):
     return render_template('errors/403.html'), 403
-
-
 @app.app_errorhandler(500)
 def error_500(error):
     return render_template('errors/500.html'), 500
-    '''
+'''
 '''
 #shutdown
 def shutdown_server():
@@ -108,7 +108,6 @@ def shutdown():
     shutdown_server()
     return 'Server shutting down...'
 '''
-
 '''
 @cam.route("/")
 def main():
@@ -117,8 +116,8 @@ def main():
 '''
 
 # The function below is executed when someone requests a URL with the pin number and action in it:
+# change to paho javascript later
 @cam.route("/<board>/<changePin>/<action>")
-
 def action(board, changePin, action):
    # Convert the pin from the URL into an integer:
    changePin = int(changePin)
@@ -139,3 +138,15 @@ def action(board, changePin, action):
    }
 
    return render_template('camera.html', **templateData)
+
+@socketio.on('my event')
+def handle_my_custom_event(json):
+    print('received json data here: ' + str(json))
+
+@socketio.on('my event1')
+def handle_my_temperature(json):
+    print('received json temperature here: ' + str(json))
+
+@socketio.on('my event2')
+def handle_my_humidity(json):
+    print('received json humidity here: ' + str(json))

@@ -64,25 +64,29 @@
               <!-- Socket real time -->
               <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.1/socket.io.js"></script>
               <script type="text/javascript" charset="utf-8">
+                //socketio setup ----------------------------------------
+                var enc = new TextDecoder("utf-8");
                 $(document).ready(function() {
-                    //connect socket
-                    var socket = io.connect('http://' + document.domain + ':' + location.port);
+                  //connect socket
+                  var socket = io.connect('http://' + document.domain + ':' + location.port);
                     
-                    //receive details
+                  //receive details
                   socket.on('connect', function() {
-                      socket.emit('my event', {data: 'I\'m connected!'});
+                      socket.emit('my event', {data: "I\'m connected!"});
                   });
                   socket.on('dht_temperature', function(msg) {
                       var nDate = new Date();
                       var month = nDate.getMonth()+1;
-                      $('#readingsUpdated').text(nDate.getDate() + '/' + nDate.getMonth() + '/' + nDate.getFullYear() + ' ' +
+                      $('#readingsUpdated').text(nDate.getDate() + '/' + month + '/' + nDate.getFullYear() + ' ' +
                                                   nDate.getHours() + 'h:' + nDate.getMinutes() +'m:' + nDate.getSeconds() + 's').html();
-                      $('#temperature').text(msg.data).html();
-                      socket.emit('my event1', {data: 'I\'m Temperature!'});
+                      console.log(enc.decode(msg.data));
+                      $('#temperature').text(enc.decode(msg.data));
+                      socket.emit('my event1', {data: "I\'m Temperature!"});
                     });
                     socket.on('dht_humidity', function(msg) {
-                      $('#humidity').text(msg.data).html();
-                      socket.emit('my event2', {data: 'I\'m Humidity!'});
+                      console.log(enc.decode(msg.data));
+                      $('#humidity').text(enc.decode(msg.data));
+                      socket.emit('my event2', {data: "I\'m Humidity!"});
                     });
                 });
               </script>
