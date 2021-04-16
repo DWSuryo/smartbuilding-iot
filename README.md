@@ -25,7 +25,7 @@ Project for making Smart building IoT. Contains Show camera, temperature sensor,
 1. Camera: human detection and counter. Counter used for device auto input (currently using dummy)
 2. Add energy management (energy, power, current sensor)
 ## Platform
-Python Flask + virtualenv
+Python Flask + virtualenv. Code based on [[1](https://github.com/CoreyMSchafer/code_snippets/tree/master/Python/Flask_Blog),[3](https://www.shanelynn.ie/asynchronous-updates-to-a-webpage-with-flask-and-socket-io/)]
 # Setup 
 ## Virtualenv (venv) and python libraries
 Use powershell:
@@ -41,6 +41,8 @@ run this file on python:
 ```
 python mqtt_pub_test_group
 ```
+## Publishing MQTT (ESP8266)
+The code uses Arduino IDE. For schematic, refer to this page [[2](https://randomnerdtutorials.com/esp8266-publishing-dht22-readings-with-mqtt-to-raspberry-pi/#more-31752)]. Then, upload .ino file to ESP
 
 ## Create database (locally: SQLite3)
 Use **python shell** ([source](https://github.com/CoreyMSchafer/code_snippets/issues/75))
@@ -58,7 +60,7 @@ powershell:
 ```
 python run.py
 ```
-# Where I learn (+ code references)
-- [Corey Schafer: Flask Tutorial](https://www.youtube.com/watch?v=QnDWIZuWYW0&list=PL-osiE80TeTs4UjLw5MM6OjgkjFeUxCYH&index=2) + [Github](https://github.com/CoreyMSchafer/code_snippets/tree/master/Python/Flask_Blog)
-- [Rui Santos: ESP8266 Tutorial with Flask](https://randomnerdtutorials.com/esp8266-publishing-dht22-readings-with-mqtt-to-raspberry-pi/#more-31752)
-- [Shane Lynn: Simple Asynchronous Flask](https://www.shanelynn.ie/asynchronous-updates-to-a-webpage-with-flask-and-socket-io/)
+# References + code
+1. [Corey Schafer: Flask Tutorial](https://www.youtube.com/watch?v=QnDWIZuWYW0&list=PL-osiE80TeTs4UjLw5MM6OjgkjFeUxCYH&index=2) + [Github](https://github.com/CoreyMSchafer/code_snippets/tree/master/Python/Flask_Blog)
+2. [Rui Santos: ESP8266 Tutorial with Flask](https://randomnerdtutorials.com/esp8266-publishing-dht22-readings-with-mqtt-to-raspberry-pi/#more-31752)
+3. [Shane Lynn: Simple Asynchronous Flask](https://www.shanelynn.ie/asynchronous-updates-to-a-webpage-with-flask-and-socket-io/)
