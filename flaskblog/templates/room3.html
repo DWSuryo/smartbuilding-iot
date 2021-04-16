@@ -1,0 +1,504 @@
+{% extends "layout.html" %}
+{% block sidebar %}{% endblock sidebar %}
+
+{% block left %}
+{% block content %}
+<!--Paho MQTT JS setup-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+  var mqtt;
+  var reconnectTimeout = 2000;
+  //var host="localhost";
+  // var host="192.168.1.3";
+  var host="mqtt.lunar-smart.com";
+  // var port=8883;    //MQTT over WebSockets
+  var port=8083;      // MQTT over WebSockets
+  
+  
+  function onFailure(message) {
+    console.log("Connection Attempt to Host "+host+"Failed");
+    setTimeout(MQTTconnect, reconnectTimeout);
+  }
+  function test1_func(msg){
+      if (msg.destinationName=="45856/test/manual"){
+        // let msg_conv = msg;
+        // console.log(msg_conv.left);
+        let x = document.getElementById("test1");
+        let tleft = document.getElementById("topleft");
+        msg_conv = JSON.parse(msg.payloadString);
+        x.innerHTML = msg_conv.left;
+        tleft.innerHTML = msg_conv.left;
+        if (msg_conv.left=="0"){
+          x.className = "d-inline p-2 bg-danger text-white";
+          tleft.className = "d-inline p-2 bg-danger text-white";
+        }
+        else if  (msg_conv.left=="1"){
+          x.className = "d-inline p-2 bg-success text-white";
+          tleft.className = "d-inline p-2 bg-success text-white";
+        }
+      }
+    }
+    function test2_func(msg){
+      if (msg.destinationName=="45856/test/manual"){
+        msg_conv = JSON.parse(msg.payloadString);
+        let x = document.getElementById("test2");
+        let tright = document.getElementById("topright");
+        x.innerHTML = msg_conv.right;
+        tright.innerHTML = msg_conv.right;
+        if (msg_conv.right=="0"){
+          x.className = "d-inline p-2 bg-danger text-white";
+          tright.className = "d-inline p-2 bg-danger text-white";
+        }
+        else if  (msg_conv.right=="1"){
+          x.className = "d-inline p-2 bg-success text-white";
+          tright.className = "d-inline p-2 bg-success text-white";
+        }
+      }
+    }
+  /*
+  function test1_auto(msg){
+    if (msg.destinationName=="45856/test/auto"){
+      let x = document.getElementById("auto");
+      x.innerHTML = msg.payloadString;
+    }
+  }
+  */
+  function autoindicator(msg){
+      let x = document.getElementById("auto");  //auto mode indicator
+      let a = document.getElementById("test1");
+      let b = document.getElementById("test2");
+      let tleft = document.getElementById("topleft");
+      let tright = document.getElementById("topright");
+      msg_conv = JSON.parse(msg.payloadString); //decoding string-->json
+      x.innerHTML = msg.payloadString;          //show string value
+      //for status
+      a.innerHTML = msg_conv.left;
+      b.innerHTML = msg_conv.right;
+      //for table
+      tleft.innerHTML = msg_conv.left;
+      tright.innerHTML = msg_conv.right;
+      //store
+      store.left = msg_conv.left;
+      store.right = msg_conv.right;
+      if (msg_conv.left == 0){                  //if left attribute = 0
+        a.className = "d-inline p-2 bg-danger text-white";
+        tleft.className = "d-inline p-2 bg-danger text-white";
+      }
+      else if (msg_conv.left >= 1){             //if left attribute = 1
+        a.className = "d-inline p-2 bg-success text-white";
+        tleft.className = "d-inline p-2 bg-success text-white";
+      }
+
+      if (msg_conv.right == 0){
+        b.className = "d-inline p-2 bg-danger text-white";
+        tright.className = "d-inline p-2 bg-danger text-white";
+      }
+      else if (msg_conv.right >= 1){
+        b.className = "d-inline p-2 bg-success text-white";
+        tright.className = "d-inline p-2 bg-success text-white";
+      }
+    }
+  function sensorindicator(msg){
+    msg_sensor = JSON.parse(msg.payloadString);
+    document.getElementById("temp1").innerHTML=msg_sensor.temperature1;
+    document.getElementById("hum1").innerHTML=msg_sensor.humidity1;
+    document.getElementById("kwh1").innerHTML=msg_sensor.kwh1;
+  }
+
+  // temporary data storage
+  var left,right;
+  var store={
+    'left' : left,
+    'right' : right,
+  };
+  count=0;
+  //initial receiving message
+  function onMessageArrived(msg){
+    out_msg="Message received "+msg.payloadString+"<br>";
+    out_msg=out_msg+"Message received in "+msg.destinationName+"<br>Number: "+count;
+    console.log(out_msg);
+    count+=1;
+    let txt = document.getElementById("console");
+    txt.innerHTML = out_msg;
+    //test1_func(msg);
+    //console.log("test1_auto called")
+    //test1_auto(out_msg);
+
+    //auto receiving
+    if (msg.destinationName=="45856/test/auto"){
+      autoindicator(msg);
+    }
+    //sensor receiving
+    if (msg.destinationName=="45856/esp8266/sensors"){
+      sensorindicator(msg);
+    }
+  }     
+  function onConnect() {
+    // Once a connection has been made, make a subscription and send a message.
+    console.log("Connected ");
+    mqtt.subscribe("45856/esp8266/sensors");
+    mqtt.subscribe("45856/test/auto");
+    mqtt.subscribe("45856/start");
+    message = new Paho.MQTT.Message("Hello World");
+    message.destinationName = "45856/start";
+    mqtt.send(message);
+  } 
+  function MQTTconnect() {
+    console.log("connecting to "+ host +" "+ port);
+    var x=Math.floor(Math.random() * 10000); 
+    var client="orderform-"+x;
+    mqtt = new Paho.MQTT.Client(host,port,client);    //Paho-MQTT broker setup
+    //document.write("connecting to "+ host+'/'+port+'/'+client);
+    var options = {
+      userName:'lunar',    //set username here
+      password:'smartsystem',    //set password here
+      timeout: 5,
+      onSuccess: onConnect,
+      onFailure: onFailure,
+    };
+    mqtt.onMessageArrived = onMessageArrived;
+    mqtt.connect(options);    //launch MQTT
+  }
+  MQTTconnect()
+</script>
+
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <h1>Smart Building</h1>
+        </div>
+        <div class="col-md-6">
+          <!-- Room list 1 2 3 -->
+          <h3>Room List</h3>
+          <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+            <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off">
+            <a class="btn btn-outline-primary" for="btnradio1" href="{{ url_for('cam.camera') }}">Room 1</a>
+          
+            <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+            <a class="btn btn-outline-primary" for="btnradio2" href="{{ url_for('cam.room2') }}">Room 2</a>
+          
+            <input type="radio" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off" checked>
+            <a class="btn btn-outline-primary" for="btnradio3" href="{{ url_for('cam.room3') }}">Room 3</a>
+          </div>
+          
+        </div>
+      </div>
+      <br>
+
+      <!-- Room Content -->
+      <div class="container-fluid">
+
+        <!--First row-->
+        <div class="row row-cols-1 row-cols-md-3 g-2">
+          <!--Camera -->
+          <div class="col">
+            <div class="card h-100">
+              <p class="card-header" style="background: #ffdab1;">Camera Stream <span id="cam_status" class="badge bg-primary">active</span></p>
+              <div class="card-body">
+                <h5 class="card-title">Camera</h5>
+                <button onclick="cameradisplay()" class="btn btn-primary">Show</button>
+                    <script type="text/javascript" charset="utf-8">
+                      function cameradisplay(){
+                        //insert camera here
+                        var x = document.getElementById("my-cam");
+                        if (x.style.display === "none") {
+                          x.style.display = "block";
+                        } else {
+                          x.style.display = "none";
+                        }
+                      }
+                    </script>
+                  <br>
+                <div class="row">
+                  <canvas class="mt-4 mb-4" id="myCanvas" width="100%" height="60%" style="border:5px solid #226575; background-color: #96d7db;"></canvas>
+                </div>
+                <table class="table table-bordered table-hover">
+                  <thead>
+                    <tr>
+                      <th colspan="2">Person Count</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td id="topleftcolor" class="bg-info">TL : <span id="topleft" class="badge bg-secondary"></span></td>
+                      <td id="toprightcolor" class="bg-warning">TR : <span id="topright" class="badge bg-secondary"></span></td>
+                    </tr>
+                  </tbody>
+                  <tbody>
+                    <tr>
+                      <td>BL : <span>XX</span></td>
+                      <td>BR : <span>XX</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!--ESP8266-->
+          <div class="col">
+            <div class="card h-100">
+              <div class="card-header" style="background: #ffdab1;">
+                MQTT Control
+              </div>
+              <div class="card-body">
+                <h5 class="card-title">ESP8266 Dashboard</h5>
+                
+                <button id="generatebtn" class="btn btn-primary" onclick="automanual()">Auto</button>
+                <br>
+                <!--
+                <h5 id="genstatus">unclicked</h5>
+                -->
+                <script type="text/javascript">
+                  function automanual(){
+                    let tr;
+                    let trig ={
+                      'trigger' : tr
+                    };
+                    let trig_conv;
+                    let x = document.getElementById("genstatus");
+                    let y = document.getElementById("generatebtn");
+                    let a = document.getElementById("send1");
+                    let b = document.getElementById("send2");
+                    if (y.innerHTML=='Auto'){
+                      //trigger for arduino            
+                      trig.trigger=1;
+                      trig_conv = JSON.stringify(trig);
+                      message = new Paho.MQTT.Message(trig_conv);
+                      message.destinationName = "45856/test/trigger";
+                      mqtt.send(message);
+                      
+          
+                      console.log("entering manual mode "+trig_conv);
+                      mqtt.unsubscribe('45856/test/auto');
+                      mqtt.subscribe('45856/test/manual');
+                      y.innerHTML = "Manual";
+                      y.className = "btn btn-warning";
+                      x.innerHTML = "Manual mode ";
+                      x.className = 'badge bg-warning text-dark';
+                      a.disabled = false;
+                      b.disabled = false;
+                    }
+                    else if (y.innerHTML='Manual'){
+                      //trigger for arduino
+                      
+                      trig.trigger=0;
+                      trig_conv = JSON.stringify(trig);
+                      message = new Paho.MQTT.Message(trig_conv);
+                      message.destinationName = "45856/test/trigger";
+                      mqtt.send(message);
+                      
+          
+                      console.log("entering auto mode "+trig_conv)
+                      mqtt.unsubscribe('45856/test/manual');
+                      mqtt.subscribe('45856/test/auto');
+                      y.innerHTML = 'Auto';
+                      y.className = 'btn btn-primary';
+                      x.innerHTML = 'Auto mode';
+                      x.className = 'badge bg-primary';
+                      a.disabled = true;
+                      b.disabled = true;
+                    }
+                  }
+                </script>
+                <!--
+                <button id="send1" class="btn btn-primary text-white" onclick="testsend1()" disabled>Send1</button>
+                <p class="d-inline p-2 bg-dark text-white">status: <span id="test1"></span></p><br>
+                <button id="send2" class="btn btn-primary text-white" onclick="testSend2()" disabled>Send2</button>
+                <p class="d-inline p-2 bg-dark text-white">status: <span id="test2"></span></p>
+                  
+                -->
+                  <script type="text/javascript" charset="utf-8">
+                  function testsend1(){
+                    //subscribe topic  
+                    mqtt.subscribe('45856/test/manual');
+                    let x = document.getElementById("test1");
+                    if (x.innerHTML=='' || x.innerHTML==0 || x.innerHTML==null){
+                      store.left = 1;
+                      cam_conv = JSON.stringify(store);
+                      //console.log("message confirmed: "+cam_conv);
+                      message = new Paho.MQTT.Message(cam_conv);
+                      message.destinationName = "45856/test/manual";
+                      mqtt.send(message);
+                      test1_func(message);
+                    }
+                    else if (x.innerHTML>=1){
+                      store.left = 0;
+                      cam_conv = JSON.stringify(store);
+                      //console.log("message confirmed: "+cam_conv);
+                      message = new Paho.MQTT.Message(cam_conv);
+                      message.destinationName = "45856/test/manual";
+                      mqtt.send(message);
+                      test1_func(message);
+                    }
+                  }
+                  
+                  function testSend2(){
+                    let y = document.getElementById("test2");
+                    if (y.innerHTML=='' || y.innerHTML==0 || y.innerHTML==null){
+                      store.right = 1;
+                      cam_conv = JSON.stringify(store);
+                      message = new Paho.MQTT.Message(cam_conv);
+                      message.destinationName = "45856/test/manual";
+                      mqtt.send(message);
+                      test2_func(message);
+                    }
+                    else if (y.innerHTML>=1){
+                      store.right = 0;
+                      cam_conv = JSON.stringify(store);
+                      message = new Paho.MQTT.Message(cam_conv);
+                      message.destinationName = "45856/test/manual";
+                      mqtt.send(message);
+                      test2_func(message);
+                    }
+                  }
+                  </script>
+
+                  <br>
+                  <table class="table table-bordered table-hover">
+                    <thead>
+                      <tr>
+                        <th scope="col" colspan="2">Nodes <span class="badge bg-secondary" id="genstatus">unclicked</span></th>
+                        <th scope="col">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th>Lamp 1</th>
+                        <td><button id="send1" class="btn btn-primary text-white" onclick="testsend1()" disabled>Send1</button></td>
+                        <td class="bg-dark text-white">s: <span id="test1"></span></td>
+                      </tr>
+                      <tr>
+                        <th>Lamp 2</th>
+                        <td><button id="send2" class="btn btn-primary text-white" onclick="testSend2()" disabled>Send2</button></td>
+                        <td class="bg-dark text-white">s: <span id="test2"></span></td>
+                      </tr>
+                      <tr>
+                        <th>Smart Plug</th>
+                        <td><button id="send2" class="btn btn-primary text-white" onclick="testSend2()" disabled>Send3</button></td>
+                        <td class="bg-dark text-white">s: <span id="test3"></span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Temp</th>
+                        <th scope="col">Hum</th>
+                        <th scope="col">Energy</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><span id="temp1"></span> °C</td>
+                        <td><span id="hum1"></span> %</td>
+                        <td><span id="kwh1"></span> kWh</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                
+              </div>
+            </div>
+          </div>
+          
+          <!--Room Info & Console-->
+          <div class="col">
+            <div class="card h-100">
+              <p class="card-header" style="background: #ffdab1;">Room Info</p>
+              <div class="card-body">
+                <h5 class="card-title">Room 1: Main hall</h5>
+
+                <!-- Button trigger to Modal -->
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                  Room Info
+                </button>
+                <br><br>
+                <!-- Modal -->
+                <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Room 1 : Main Hall</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/16x9_by_Pengo.svg/1200px-16x9_by_Pengo.svg.png" alt="16:9" width="100%" height="100%" />
+                        <h5 class="mt-2">Devices used:</h5>
+                        <ol>
+                          <li>ESP8266
+                          <ul>
+                          <li>DHT11 sensor: temperature and humidity</li>
+                          <li>Energymeter (kWh)</li>
+                          <li>LED</li>
+                          </ul>
+                          </li>
+                          <li>Camera
+                          <ul>
+                          <li>Hikvision DS-2CD2421G00-I</li>
+                          </ul>
+                          </li>
+                        </ol>
+                      </div>
+                      <div class="modal-footer">
+                        <p class="fw-lighter">DWSuryo</p>
+                        <!--
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary">Save changes</button>
+                        -->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <h5>Console</h5>
+                <b class="card-text">Auto status: </b>
+                  <div class="row bg-dark">
+                    <p id="auto" class="text-info">waiting</p>
+                  </div>
+                <b>Receive message:</b>
+                  <div class="row bg-dark">
+                    <p id="console" class="text-info">waiting</p>
+                  </div>
+                <p class="text-danger">You have to login first to see the console</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <br>
+
+        <!--Second row-->
+        <div class="row row-cols-1 row-cols-md-2 g-2">
+          <div class="col">
+            <div class="card h-100">
+              <p class="card-header" style="background: #ffdab1;">Sensor Graph</p>
+              <div class="card-body">
+                <h5 class="card-title">ESP8266 Sensors</h5>
+                <!--insert graph here-->
+                <canvas id="room1" class="row"></canvas>
+                <!--Chart.js-->
+                <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+                <script type="text/javascript" src="./static/sensor_room1.js"></script>
+                <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="card h-100">
+              <p class="card-header" style="background: #ffdab1;">Energy Graph</p>
+              <div class="card-body">
+                <h5 class="card-title">ESP8266 Sensors</h5>
+                <!--insert graph here-->
+                <canvas id="room1" class="row"></canvas>
+                <!--Chart.js-->
+                <script type="text/javascript" src="./static/sensor_room1.js"></script>
+                <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+{% endblock content %}
+{%endblock left%}

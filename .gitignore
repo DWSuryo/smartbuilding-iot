@@ -1,0 +1,23 @@
+# specific file formats
+*.db
+
+# caches
+__pycache__/
+*.pyc
+
+# folders (venv related)
+/include/
+/Scripts/
+/Lib/
+
+#files
+pyvenv.cfg
+webdevflask_bp.txt
+requirements_bp.txt
+git-help.txt
+site.db
+
+#static
+!/flaskblog/static/profile_pics/
+flaskblog/static/profile_pics/*
+!flaskblog/static/profile_pics/default_pp.png

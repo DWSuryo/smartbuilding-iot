@@ -1,0 +1,40 @@
+how to modify db in SQLAlchemy:
+in terminal:
+
+>>> python
+>>> from flaskblog import db                #db in __init__.py where db=SQLAlchemy
+>>> db.create_all()                         #creates site.db
+>>> from flaskblog import User, Post        #imports module     
+>>> user_1 = User(username='Admin', email='admin@admin.com', password='admin')  #assign user_1
+>>> db.session.add(user_1)                  #adds user (not added to db yet)
+
+can add more user (line 7 and 8)
+commit:
+
+>>> db.session.commit()            #commits inserted data to database
+
+find user:
+>>> User.query.all()
+>>> User.query.filter_by(username='Admin').first()
+>>> user=User.query.filter_by(username='Admin').first()
+user.username
+user.id
+user = User.query.get(1)
+user.posts
+...
+
+delete all SQL data:
+>>> db.drop_all()           deletes (drops) the tables
+>>> db.create_all()         create new table
+>>> User.query.all()        check users
+>>> Post.query.all()        check posts
+
+Build database (in Flask Blueprints) --> use shell
+source: https://github.com/CoreyMSchafer/code_snippets/issues/75
+
+$ python
+>>> from flask_blog import create_app
+>>> app = create_app()
+>>> app.app_context().push()
+>>> from flask_blog import db
+>>> db.create_all()
