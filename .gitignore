@@ -16,6 +16,8 @@ webdevflask_bp.txt
 requirements_bp.txt
 git-help.txt
 site.db
+db_tutorial.txt
+mqtt_pub_test_group.py
 
 #static
 !/flaskblog/static/profile_pics/

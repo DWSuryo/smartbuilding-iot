@@ -147,6 +147,7 @@
     mqtt.subscribe("45856/esp8266/sensors");
     mqtt.subscribe("45856/test/auto");
     mqtt.subscribe("45856/start");
+    mqtt.subscribe("45856/test/trigger")
     message = new Paho.MQTT.Message("Hello World");
     message.destinationName = "45856/start";
     mqtt.send(message);
@@ -300,6 +301,7 @@
                       trig_conv = JSON.stringify(trig);
                       message = new Paho.MQTT.Message(trig_conv);
                       message.destinationName = "45856/test/trigger";
+                      message.retained = true;
                       mqtt.send(message);
                       
           
