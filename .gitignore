@@ -12,13 +12,17 @@ Lib
 
 #files
 pyvenv.cfg
+site.db
+mqtt_pub_test_group.py
+forms.py
+credential.ini
+
+#text file
 webdevflask_bp.txt
 requirements_bp.txt
 git-help.txt
-site.db
 db_tutorial.txt
-mqtt_pub_test_group.py
-credential.ini
+flask_setup.txt
 
 #static
 !/flaskblog/static/profile_pics/
