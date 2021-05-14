@@ -2,13 +2,13 @@
 *.db
 
 # caches
-__pycache__/
+__pycache__
 *.pyc
 
 # folders (venv related)
-/include/
-/Scripts/
-/Lib/
+include
+Scripts
+Lib
 
 #files
 pyvenv.cfg
@@ -18,6 +18,7 @@ git-help.txt
 site.db
 db_tutorial.txt
 mqtt_pub_test_group.py
+credential.ini
 
 #static
 !/flaskblog/static/profile_pics/

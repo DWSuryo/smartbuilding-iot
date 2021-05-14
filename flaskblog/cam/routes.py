@@ -8,6 +8,7 @@ from flask_socketio import SocketIO, emit
 #from flask_cors import CORS
 from datetime import datetime
 import time, csv, json
+import configparser
 
 # import eventlet
 # eventlet.monkey_patch()
@@ -72,11 +73,16 @@ def on_message(client, userdata, message):
                 writer.writerow(row)
                 print("row written")
 
+cred=configparser.ConfigParser()
+cred.read("credential.ini")
+#print(cred.sections())         # test if file exists
 mqttc=mqtt.Client(client_id="capstone")
-broker = "mqtt.lunar-smart.com"
-port = 8883
-username = "lunar"
-password = "smartsystem"
+
+broker = cred["MQTT-python"]["broker"]
+port = int(cred["MQTT-python"]["port"])
+username = cred["MQTT-python"]["user"]
+password = cred["MQTT-python"]["pass"]
+
 mqttc.username_pw_set(username, password)
 #mqttc=mqtt.Client(client_id="", clean_session=True, userdata=None, protocol=mqtt.MQTTv31)
 mqttc.on_connect = on_connect
