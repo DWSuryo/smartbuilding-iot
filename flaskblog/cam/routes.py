@@ -6,7 +6,7 @@ import cv2
 import paho.mqtt.client as mqtt
 from flask_socketio import SocketIO, emit
 #from flask_cors import CORS
-from datetime import datetime
+from datetime import datetime, date
 import time, csv, json
 import configparser
 
@@ -29,7 +29,10 @@ def on_connect(client, userdata, flags, rc):
 
 # The callback for when a PUBLISH message is received from the ESP8266.
 def on_message(client, userdata, message):
-        #socketio.emit('my variable')
+    if not hasattr(on_message,'energy'):
+        on_message.energy = 0
+    if not hasattr(on_message,'tgl_temp'):
+        on_message.tgl_temp = 0
     print("Received message '" + str(message.payload) + "' on topic '"
         + message.topic + "' with QoS " + str(message.qos))
     # plain text receive
@@ -50,28 +53,52 @@ def on_message(client, userdata, message):
         print('received esp1 ', type(esp1))
         esp1_conv = json.loads(esp1)
         print('convert esp1 ', type(esp1_conv))
-        print(f'esp1_conv: temp1 {esp1_conv["temperature1"]} --- hum1 {esp1_conv["humidity1"]} --- kwh1 {esp1_conv["kwh1"]}')
-        print(type(esp1_conv['temperature1']), type(esp1_conv['humidity1']), type(esp1_conv['kwh1']))
+        print(f'esp1_conv: temp1 {esp1_conv["temperature1"]} --- hum1 {esp1_conv["humidity1"]} --- power1 {esp1_conv["power1"]}')
+        print(type(esp1_conv['temperature1']), type(esp1_conv['humidity1']), type(esp1_conv['power1']))
         # socketio.emit('sensor1', {'data': message.payload})
         # csv write
         with open('./sensor_room1.csv', mode='a') as file:
             with open('./sensor_room1.csv', mode='r+', newline='') as file:
                 reader = csv.reader(file, delimiter=",")
                 writer = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                tgl = datetime.now()
-                header = ['tgl','wkt','temp','hum','energy']
-                row = [tgl.strftime("%x"),tgl.strftime("%X"),esp1_conv["temperature1"],esp1_conv["humidity1"],esp1_conv["kwh1"]]
                 
-                print(f'file opened: {esp1_conv["temperature1"]} --- {esp1_conv["humidity1"]} --- {esp1_conv["kwh1"]} --- {tgl}')
+                # set the date and compare
+                tgl = datetime.now().replace(microsecond=0)
+                print(f"{tgl.day} --- {on_message.tgl_temp}")
+                if tgl.day != on_message.tgl_temp:
+                    print("energy reset")
+                    on_message.energy = 0
+                on_message.tgl_temp = tgl.day
+
+                power = float(esp1_conv["power1"])
+                step = 5 # time step
+                on_message.energy = round((on_message.energy + power/(3600/step)),2)
+
+                # socketio emits energy
+                # socketio.emit('esp_energy', {'data': on_message.energy})
+                mqttc.publish("45856/esp8266/sensors/energy",on_message.energy)
+
+                header = ['tgl','temp','hum','power','energy']
+                row = [tgl,
+                        # tgl.strftime("%x"),
+                        # tgl.strftime("%X"),
+                        esp1_conv["temperature1"],
+                        esp1_conv["humidity1"],
+                        esp1_conv["power1"],
+                        #esp1_conv["energy1"],
+                        on_message.energy
+                        ]
+                
+                print(f'file opened: {esp1_conv["temperature1"]} --- {esp1_conv["humidity1"]} --- {esp1_conv["power1"]} --- {tgl}')
                 #way to write to csv file
-                #if temperature1 and humidity1 and kwh1:
+                #if temperature1 and humidity1 and power1:
                 print(enumerate(reader))
                 rowcount = sum(1 for num in reader)     #row count
                 if rowcount == 0:
                     writer.writerow(header)
                     print('header written')
                 writer.writerow(row)
-                print("row written")
+                print("row written", rowcount)
 
 cred=configparser.ConfigParser()
 cred.read("credential.ini")
@@ -89,7 +116,7 @@ mqttc.on_connect = on_connect
 mqttc.on_message = on_message
 mqttc.connect(broker,port,60)
 mqttc.loop_start()
-
+'''
 # Create a dictionary called pins to store the pin number, name, and pin state:
 pins = {
    4 : {'name' : 'GPIO 4', 'board' : 'esp8266', 'topic' : 'esp8266/4', 'state' : 'False'},
@@ -100,21 +127,21 @@ pins = {
 templateData = {
    'pins' : pins
    }
-
+'''
 # to camera page
 @cam.route("/")
 @cam.route("/capstone")
 @cam.route("/capstone/room1")
 def camera():
-    return render_template('room1.html', async_mode=socketio.async_mode, title='Room 1', **templateData)
+    return render_template('room1_new.html', async_mode=socketio.async_mode, title='Room 1')
 
 @cam.route("/capstone/room2")
 def room2():
-    return render_template('room2.html', async_mode=socketio.async_mode, title='Room 2', **templateData)
+    return render_template('room2_new.html', async_mode=socketio.async_mode, title='Room 2')
 
 @cam.route("/capstone/room3")
 def room3():
-    return render_template('room3.html', async_mode=socketio.async_mode, title='Room 3', **templateData)
+    return render_template('room3_new.html', async_mode=socketio.async_mode, title='Room 3')
 
 # stream camera
 camera = cv2.VideoCapture(0)
@@ -144,6 +171,7 @@ def gen(camera):
 def video_feed():
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+#http request code page
 '''
 @app.app_errorhandler(404)
 def error_404(error):
@@ -177,6 +205,7 @@ def main():
 
 # The function below is executed when someone requests a URL with the pin number and action in it:
 # change to paho javascript later
+'''
 @cam.route("/<board>/<changePin>/<action>")
 def action(board, changePin, action):
    # Convert the pin from the URL into an integer:
@@ -198,7 +227,8 @@ def action(board, changePin, action):
    }
 
    return render_template('camera.html', **templateData)
-
+'''
+# socketio response
 @socketio.on('my event')
 def handle_my_custom_event(json):
     print('received json data here: ' + str(json))

@@ -24,6 +24,9 @@ git-help.txt
 db_tutorial.txt
 flask_setup.txt
 
+#html
+mqtt_automanual.py
+
 #static
 !/flaskblog/static/profile_pics/
 flaskblog/static/profile_pics/*

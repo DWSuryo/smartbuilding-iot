@@ -1,0 +1,509 @@
+{% extends "layout.html" %}
+{% block plugin %}
+  <!--Paho JS-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+  <!--Amcharts-->
+  <script src="https://cdn.amcharts.com/lib/4/core.js"></script>
+  <script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
+{% endblock plugin %}
+
+{% block sidebar %}{% endblock sidebar %}
+
+{% block left %}
+{% block content %}
+  
+  <!--insert MQTT setup here-->
+  <script type="text/javascript" charset="utf-8">
+    var mqtt;
+    var reconnectTimeout = 2000;
+    //var host="localhost";
+    var host="mqtt.lunar-smart.com";
+    var port=8083;    //MQTT over WebSockets
+    function onFailure(message) {
+      console.log("Connection Attempt to Host "+host+"Failed");
+      setTimeout(MQTTconnect, reconnectTimeout);
+    }
+    // temporary data storage
+    var store={
+      'left' : null,
+      'right' : null,
+    };
+    count=0;
+    //message arrival
+    function onMessageArrived(msg){
+      out_msg="Message received "+msg.payloadString+"<br>";
+      out_msg=out_msg+"Message topic "+msg.destinationName+"<br>Number: "+count;
+      console.log(out_msg);
+      
+      let txt = document.getElementById("console");
+      txt.innerHTML = out_msg;
+
+      let txt_tr = document.getElementById("console_tr");
+      let txt_auto = document.getElementById("console_auto");
+      let txt_man = document.getElementById("console_man");
+      var d = new Date;
+
+      let left = document.getElementById("btn_left");
+      let right = document.getElementById("btn_right");
+      
+      //displays trigger message value to status element
+      let status = document.getElementById("status_test");
+      if (msg.destinationName=="45856/test/trigger"){
+        let tr_conv = JSON.parse(msg.payloadString);
+        document.getElementById("status_test").innerHTML=tr_conv.trigger;
+        txt_tr.innerHTML = msg.payloadString +"<br>"+ d + "<br>Number: "+count;
+      }
+
+      //checks status value to determine auto/manual mode from trigger message
+      var mode = document.getElementById("mode_test");
+      if (status.innerHTML=="0" || status.innerHTML=="" ||
+          status.innerHTML==null ||status.innerHTML=="unclicked"){
+        // document.getElementById("mode_test").innerHTML="Auto";
+        mode.innerHTML="Auto";
+        mode.className == "badge bg-primary";
+        left.disabled=true;
+        right.disabled=true;
+        if (msg.destinationName=="45856/test/auto"){
+          let auto_conv = JSON.parse(msg.payloadString);
+          store.left = auto_conv.left;
+          store.right = auto_conv.right;
+          document.getElementById("status_left").innerHTML=auto_conv.left;
+          document.getElementById("status_right").innerHTML=auto_conv.right;
+          txt_auto.innerHTML = msg.payloadString +"<br>"+ d + "<br>Number: "+count;
+        }
+      }
+      else if (status.innerHTML=="1" ){
+        // document.getElementById("mode_test").innerHTML="Manual";
+        mode.innerHTML="Manual";
+        mode.className == "badge bg-warning";
+        left.disabled=false;
+        right.disabled=false;
+        if (msg.destinationName=="45856/test/manual"){
+          let man_conv = JSON.parse(msg.payloadString);
+          document.getElementById("status_left").innerHTML=man_conv.left;
+          document.getElementById("status_right").innerHTML=man_conv.right;
+          txt_man.innerHTML = msg.payloadString +"<br>"+ d + "<br>Number: "+count;
+        }
+      }
+      
+      /*
+      if (msg.destinationName=="45856/test/auto"){
+        let auto_conv = JSON.parse(msg.payloadString);
+        store.left = auto_conv.left;
+        store.right = auto_conv.right;
+        document.getElementById("status_left").innerHTML=auto_conv.left;
+        document.getElementById("status_right").innerHTML=auto_conv.right;
+        txt_auto.innerHTML = msg.payloadString +"<br>"+ d + "<br>Number: "+count;
+      }
+      if (msg.destinationName=="45856/test/manual"){
+        let man_conv = JSON.parse(msg.payloadString);
+        document.getElementById("status_left").innerHTML=man_conv.left;
+        document.getElementById("status_right").innerHTML=man_conv.right;
+        txt_man.innerHTML = msg.payloadString +"<br>"+ d + "<br>Number: "+count;
+      }
+      */
+
+      //lwt display
+      let txt_lwt = document.getElementById("console_lwt");
+      let badge_lwt = document.getElementById("status_lwt");
+      if (msg.destinationName=="45856/esp8266/connect"){
+        let lwt_conv = JSON.parse(msg.payloadString);
+        badge_lwt.innerHTML=lwt_conv.connect;
+        if (badge_lwt.innerHTML=="offline"){
+          badge_lwt.className="badge bg-danger";
+        }
+        if (badge_lwt.innerHTML=="online"){
+          badge_lwt.className="badge bg-success";
+        }
+        txt_lwt.innerHTML = msg.payloadString +"<br>"+ d + "<br>Number: "+count;
+      }
+      //sensor display
+      let txt_sensor = document.getElementById("console_sensor");
+      if (msg.destinationName=="45856/esp8266/sensors"){
+        txt_sensor.innerHTML = msg.payloadString +"<br>"+ d + "<br>Number: "+count;
+        let sensor_conv = JSON.parse(msg.payloadString);
+        document.getElementById("temp1").innerHTML = sensor_conv.temperature1;
+        document.getElementById("hum1").innerHTML = sensor_conv.humidity1;
+        document.getElementById("pow1").innerHTML = sensor_conv.power1
+      }
+
+      if (msg.destinationName=="45856/esp8266/sensors/energy"){
+        document.getElementById("kwh1").innerHTML = msg.payloadString
+      }
+
+      count+=1; //message counter
+    }
+    function onConnect() {
+      // Once a connection has been made, make a subscription and send a message.
+      console.log("Connected ");
+			mqtt.subscribe("45856/test/#");
+      mqtt.subscribe("45856/esp8266/#");
+			mqtt.subscribe("45856/start");
+      message = new Paho.MQTT.Message("Hello World");
+      message.destinationName = "45856/start";
+      mqtt.send(message);
+    } 
+    function MQTTconnect() {
+      
+      var x=Math.floor(Math.random() * 10000); 
+      var client="Client-"+x;
+      console.log("connecting to "+ host +" "+ port + " (" + client + ")");
+      mqtt = new Paho.MQTT.Client(host,port,client);    //Paho-MQTT broker setup
+      //document.write("connecting to "+ host+'/'+port+'/'+client);
+      var options = {
+        userName:'lunar',    //set username here
+        password:'smartsystem',    //set password here
+        timeout: 5,
+        onSuccess: onConnect,
+        onFailure: onFailure,
+      };
+      mqtt.onMessageArrived = onMessageArrived;
+      mqtt.connect(options);    //launch MQTT
+    }
+    MQTTconnect();
+  </script>
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <h1>Smart Building</h1>
+    </div>
+    <div class="col-md-6">
+      <!-- Room list 1 2 3 -->
+      <h3>Room List</h3>
+      <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+        <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
+        <a class="btn btn-outline-primary" for="btnradio1" href="{{ url_for('cam.camera') }}">Room 1</a>
+      
+        <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+        <a class="btn btn-outline-primary" for="btnradio2" href="{{ url_for('cam.room2') }}">Room 2</a>
+      
+        <input type="radio" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off">
+        <a class="btn btn-outline-primary" for="btnradio3" href="{{ url_for('cam.room3') }}">Room 3</a>
+      </div>
+      
+    </div>
+  </div>
+  <br>
+<!--new MQTT logic-->
+<div class="container-fluid">
+  <div class="row g-2">
+    <div class="col-12 col-md-5">
+      <div class="card h-100">
+        <p class="card-header" style="background-color: powderblue;">Camera Stream <span id="cam_status" class="badge bg-primary">active</span></p>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6">
+              <h5 class="card-title">Camera</h5>
+            </div>
+            <div class="col-6">
+              <button class="btn btn-sm btn-dark">Show</button>
+            </div>
+          </div>
+          <div class="row">
+            <canvas class="mt-4 mb-4" id="myCanvas" width="100%" height="60%" style="border:5px solid #226575; background-color: #96d7db;"></canvas>
+          </div>
+          <!--Person Counter-->
+          <div class="row justify-content-md-center">
+            <div class="col">
+              <!-- <table class="table table-bordered">
+              <thead>
+                <tr>aaa
+                  <th rowspan="2" class="text-center table-dark">Person Counter</th>
+                  <td>XX</td>
+                  <td>XX</td>
+                </tr>
+                <tr>
+                  <td>XX</td>
+                  <td>XX</td>
+                </tr>
+              </thead>
+              </table> -->
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th colspan="4" class="text-center table-dark">Person Counter</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="bg-danger text-white">XX</td>
+                    <td class="bg-success text-white">XX</td>
+                    <td class="bg-primary text-white">XX</td>
+                    <td class="bg-warning text-dark">XX</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-7">
+      <div class="card h-100">
+        <p class="card-header" style="background-color: powderblue;">MQTT 
+          {% if current_user.is_authenticated %}
+            <span class="badge bg-primary">Logged in</span>
+          {% else %}
+            <span class="badge bg-danger">control needs login</span>
+          {% endif %}
+        </p>
+        <div class="card-body">
+          <h5 class="card-title">ESP8266 <span id="status_lwt" class="badge bg-secondary">waiting</span></h5>
+          <!-- <button class="btn-sm btn-dark" id="btn_tr" onclick="trbtn()">trigger test</button> -->
+          <!-- <p>Mode: <span id="mode_test"></span><br> -->
+            status: <span id="status_test">unclicked</span></p>
+            <div class="row g-1">
+              <!--ESP Control-->
+              <div class="col-12 col-md-7">
+                <table class="table">
+                  <thead class="table-dark">
+                    <tr>
+                      <th colspan="3">ESP8266</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td width="30%">Mode</td>
+                      {% if current_user.is_authenticated %}
+                        <td><button class="btn-sm btn-dark" id="btn_tr" onclick="trbtn()">Trigger</button></td>
+                      {% else %}
+                        <td></td>
+                      {% endif %}
+                      <!-- <td><button class="btn-sm btn-dark" id="btn_tr" onclick="trbtn()">Trigger</button></td> -->
+                      <td width="30%" class="table-active"><span class="badge bg-secondary" id="mode_test"></span></td>
+                    </tr>
+                  </tbody>
+                  <thead class="table-light">
+                    <tr>
+                      <th>Nodes</th>
+                      <th>Control</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Left</td>
+                      {% if current_user.is_authenticated %}
+                        <!-- <td><button id="send1" class="btn btn-primary text-white" onclick="testsend1()" disabled>Send1</button></td> -->
+                        <td><button class="btn btn-sm btn-dark" id="btn_left" onclick="leftbtn()">left</button></td>
+                      {% else %}
+                        <td></td>
+                      {% endif %}
+                      <!-- <td><button class="btn btn-sm btn-dark" id="btn_left" onclick="leftbtn()">left</button></td> -->
+                      <td class="table-active" id="status_left"></td>
+                    </tr>
+                    <tr>
+                      <td>Right</td>
+                      {% if current_user.is_authenticated %}
+                        <td><button class="btn btn-sm btn-dark" id="btn_right" onclick="rightbtn()">right</button></td>                       
+                      {% else %}
+                        <td></td>
+                      {% endif %}
+                      <!-- <td><button class="btn btn-sm btn-dark" id="btn_right" onclick="rightbtn()">right</button></td> -->
+                      <!-- <td><button class="btn-sm btn-dark" id="btn_right" onclick="rightbtn()">Switch</button></td> -->
+                      <td class="table-active" id="status_right"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!--Sensor indicator-->
+              <div class="col-12 col-md-5">     
+                <table class="table">
+                  <thead class="table-dark">
+                    <tr>
+                      <th colspan="2">Sensors</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td width="50%">Temp</td>
+                      <td class="table-active"><span id="temp1">XX</span> °C</td>
+                    </tr>
+                    <tr>
+                      <td>Humidity</td>
+                      <td class="table-active"><span id="hum1">XX</span> %</td>
+                    </tr>
+                    <tr>
+                      <td>Power</td>
+                      <td class="table-active"><span id="pow1">XX</span> W</td>
+                    </tr>
+                    <tr>
+                      <td>Energy (daily)</td>
+                      <td class="table-active"><span id="kwh1">XX</span> kWh</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            
+
+            
+
+          <!-- Button trigger modal -->
+          {% if current_user.is_authenticated %}
+            <button type="button" class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#exampleModal">
+              ESP Message
+            </button>
+          {% endif %}
+          
+
+          <!-- Modal -->
+          <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <!--Indicator-->
+                  <div class="row">
+                    <div class="col-12 col-md-6">
+                      <h5>Message</h5>
+                      <p id="console">waiting</p>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <h5>Trigger</h5>
+                      <p id="console_tr">waiting</p>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-6 col">
+                      <h5>Auto</h5>
+                      <p id="console_auto">waiting</p>
+                    </div>
+                    <div class="col-6 col">
+                      <h5>Manual</h5>
+                      <p id="console_man">waiting</p>
+                    </div>
+                  </div>
+                  <!--Sensors-->
+                  <div class="row">
+                    <div class="col">
+                      <h5>Sensors</h5>
+                      <p id="console_sensor">waiting</p>
+                    </div>
+                    <div class="col">
+                      <h5>LWT</h5>
+                      <p id="console_lwt">waiting</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div><br>
+  
+<!-- Room Content -->
+  
+  <!--Second row-->
+  <div class="row row-cols-1 row-cols-md-2 g-2">
+    <div class="col">
+      <div class="card h-100">
+        <p class="card-header" style="background-color: powderblue;">Temperature Sensor Graph</p>
+        <div class="card-body">
+          <h5 class="card-title">Temperature and Humidity</h5>
+          <!--insert graph here-->
+          <div id="chartdiv1" class="chart"></div>
+          <!-- <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p> -->
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card h-100">
+        <p class="card-header" style="background-color: powderblue;">Energy Management Graph</p>
+        <div class="card-body">
+          <h5 class="card-title">Power and Energy Sensor</h5>
+          <!--insert graph here-->
+          <div id="chartdiv2" class="chart"></div>
+          <!-- <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p> -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='chart_amcharts4.js') }}"></script>
+<script type="text/javascript">
+  createchart("chartdiv1","DHT11", "{{ url_for('static', filename='sensor_room1.csv') }}")
+  createchart("chartdiv2","Energy", "{{ url_for('static', filename='sensor_room1.csv') }}")
+</script>
+
+<!--button toggle-->
+<script type="text/javascript" charset="utf-8">
+  function trbtn(){
+    let tr={
+      "trigger":null
+    }
+    let s = document.getElementById("status_test");
+    if (s.innerHTML=="0" || s.innerHTML=="" || s.innerHTML==null){
+      tr.trigger=1;
+      tr_conv=JSON.stringify(tr);
+      message = new Paho.MQTT.Message(tr_conv);
+      message.destinationName = "45856/test/trigger";
+      mqtt.send(message);
+    }
+    if (s.innerHTML=="1" || s.innerHTML=="unclicked"){
+      tr.trigger=0;
+      tr_conv=JSON.stringify(tr);
+      message = new Paho.MQTT.Message(tr_conv);
+      message.destinationName = "45856/test/trigger";
+      mqtt.send(message);
+    }
+  }
+  function leftbtn(){
+    let x = document.getElementById("status_left");
+    if (x.innerHTML=='' || x.innerHTML==0 || x.innerHTML==null){
+      store.left = 1;
+      cam_conv = JSON.stringify(store);
+      //console.log("message confirmed: "+cam_conv);
+      message = new Paho.MQTT.Message(cam_conv);
+      message.destinationName = "45856/test/manual";
+      mqtt.send(message);
+    }
+    else if (x.innerHTML>=1){
+      store.left = 0;
+      cam_conv = JSON.stringify(store);
+      //console.log("message confirmed: "+cam_conv);
+      message = new Paho.MQTT.Message(cam_conv);
+      message.destinationName = "45856/test/manual";
+      mqtt.send(message);
+    }
+  }
+  function rightbtn(){
+    let x = document.getElementById("status_right");
+    if (x.innerHTML=='' || x.innerHTML==0 || x.innerHTML==null){
+      store.right = 1;
+      cam_conv = JSON.stringify(store);
+      //console.log("message confirmed: "+cam_conv);
+      message = new Paho.MQTT.Message(cam_conv);
+      message.destinationName = "45856/test/manual";
+      mqtt.send(message);
+    }
+    else if (x.innerHTML>=1){
+      store.right = 0;
+      cam_conv = JSON.stringify(store);
+      //console.log("message confirmed: "+cam_conv);
+      message = new Paho.MQTT.Message(cam_conv);
+      message.destinationName = "45856/test/manual";
+      mqtt.send(message);
+    }
+  }
+</script>
+
+{% endblock content %}
+{%endblock left%}
