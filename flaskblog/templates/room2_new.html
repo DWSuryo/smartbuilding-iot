@@ -60,9 +60,12 @@
           status.innerHTML==null ||status.innerHTML=="unclicked"){
         // document.getElementById("mode_test").innerHTML="Auto";
         mode.innerHTML="Auto";
-        mode.className == "badge bg-primary";
-        left.disabled=true;
-        right.disabled=true;
+        mode.className = "badge bg-success";
+        if (left && right){
+          left.disabled=true;
+          right.disabled=true;
+        }
+        
         if (msg.destinationName=="45856/test/auto"){
           let auto_conv = JSON.parse(msg.payloadString);
           store.left = auto_conv.left;
@@ -75,9 +78,11 @@
       else if (status.innerHTML=="1" ){
         // document.getElementById("mode_test").innerHTML="Manual";
         mode.innerHTML="Manual";
-        mode.className == "badge bg-warning";
-        left.disabled=false;
-        right.disabled=false;
+        mode.className = "badge bg-primary";
+        if (left && right){
+          left.disabled=false;
+          right.disabled=false;
+        }
         if (msg.destinationName=="45856/test/manual"){
           let man_conv = JSON.parse(msg.payloadString);
           document.getElementById("status_left").innerHTML=man_conv.left;
@@ -204,19 +209,6 @@
           <!--Person Counter-->
           <div class="row justify-content-md-center">
             <div class="col">
-              <!-- <table class="table table-bordered">
-              <thead>
-                <tr>aaa
-                  <th rowspan="2" class="text-center table-dark">Person Counter</th>
-                  <td>XX</td>
-                  <td>XX</td>
-                </tr>
-                <tr>
-                  <td>XX</td>
-                  <td>XX</td>
-                </tr>
-              </thead>
-              </table> -->
               <table class="table table-bordered">
                 <thead>
                   <tr>
@@ -284,8 +276,8 @@
                   <tbody>
                     <tr>
                       <td>Left</td>
+                      
                       {% if current_user.is_authenticated %}
-                        <!-- <td><button id="send1" class="btn btn-primary text-white" onclick="testsend1()" disabled>Send1</button></td> -->
                         <td><button class="btn btn-sm btn-dark" id="btn_left" onclick="leftbtn()">left</button></td>
                       {% else %}
                         <td></td>
@@ -295,13 +287,13 @@
                     </tr>
                     <tr>
                       <td>Right</td>
+                      
                       {% if current_user.is_authenticated %}
                         <td><button class="btn btn-sm btn-dark" id="btn_right" onclick="rightbtn()">right</button></td>                       
                       {% else %}
                         <td></td>
                       {% endif %}
                       <!-- <td><button class="btn btn-sm btn-dark" id="btn_right" onclick="rightbtn()">right</button></td> -->
-                      <!-- <td><button class="btn-sm btn-dark" id="btn_right" onclick="rightbtn()">Switch</button></td> -->
                       <td class="table-active" id="status_right"></td>
                     </tr>
                   </tbody>
@@ -319,19 +311,19 @@
                   <tbody>
                     <tr>
                       <td width="50%">Temp</td>
-                      <td class="table-active"><span id="temp1">XX</span> °C</td>
+                      <td class="table-active"><span id="temp1"></span> °C</td>
                     </tr>
                     <tr>
                       <td>Humidity</td>
-                      <td class="table-active"><span id="hum1">XX</span> %</td>
+                      <td class="table-active"><span id="hum1"></span> %</td>
                     </tr>
                     <tr>
                       <td>Power</td>
-                      <td class="table-active"><span id="pow1">XX</span> W</td>
+                      <td class="table-active"><span id="pow1"></span> W</td>
                     </tr>
                     <tr>
                       <td>Energy (daily)</td>
-                      <td class="table-active"><span id="kwh1">XX</span> kWh</td>
+                      <td class="table-active"><span id="kwh1"></span> kWh</td>
                     </tr>
                   </tbody>
                 </table>
@@ -394,7 +386,7 @@
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                  <button type="button" class="btn btn-primary">Save changes</button>
+                  <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
                 </div>
               </div>
             </div>
@@ -436,7 +428,7 @@
   </div>
 
 </div>
-
+<!--insert chart command-->
 <script src="{{ url_for('static', filename='chart_amcharts4.js') }}"></script>
 <script type="text/javascript">
   createchart("chartdiv1","DHT11", "{{ url_for('static', filename='sensor_room1.csv') }}")
@@ -445,7 +437,7 @@
 
 <!--button toggle-->
 <script type="text/javascript" charset="utf-8">
-  function trbtn(){
+  function trbtn(){     //trigger button
     let tr={
       "trigger":null
     }
@@ -465,7 +457,7 @@
       mqtt.send(message);
     }
   }
-  function leftbtn(){
+  function leftbtn(){   //left button
     let x = document.getElementById("status_left");
     if (x.innerHTML=='' || x.innerHTML==0 || x.innerHTML==null){
       store.left = 1;
@@ -484,7 +476,7 @@
       mqtt.send(message);
     }
   }
-  function rightbtn(){
+  function rightbtn(){    //right button
     let x = document.getElementById("status_right");
     if (x.innerHTML=='' || x.innerHTML==0 || x.innerHTML==null){
       store.right = 1;

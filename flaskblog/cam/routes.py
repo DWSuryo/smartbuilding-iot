@@ -15,7 +15,7 @@ import configparser
 
 cam = Blueprint('cam', __name__)
 #socketio = SocketIO(cam, ping_interval=5, ping_timeout=10)
-print("YOU ARE WOKRING ON:", os.getcwd())
+# print("YOU ARE WOKRING ON:", os.getcwd())
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
@@ -50,15 +50,15 @@ def on_message(client, userdata, message):
     # JSON receive and csv write
     if message.topic == "45856/esp8266/sensors":
         esp1 = str(message.payload.decode('utf-8'))
-        print('received esp1 ', type(esp1))
+        #print('received esp1 ', type(esp1))
         esp1_conv = json.loads(esp1)
-        print('convert esp1 ', type(esp1_conv))
+        #print('convert esp1 ', type(esp1_conv))
         print(f'esp1_conv: temp1 {esp1_conv["temperature1"]} --- hum1 {esp1_conv["humidity1"]} --- power1 {esp1_conv["power1"]}')
-        print(type(esp1_conv['temperature1']), type(esp1_conv['humidity1']), type(esp1_conv['power1']))
+        #print(type(esp1_conv['temperature1']), type(esp1_conv['humidity1']), type(esp1_conv['power1']))
         # socketio.emit('sensor1', {'data': message.payload})
         # csv write
-        with open('./sensor_room1.csv', mode='a') as file:
-            with open('./sensor_room1.csv', mode='r+', newline='') as file:
+        with open('./flaskblog/static/sensor_room1.csv', mode='a') as file:
+            with open('./flaskblog/static/sensor_room1.csv', mode='r+', newline='') as file:
                 reader = csv.reader(file, delimiter=",")
                 writer = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 
@@ -88,11 +88,10 @@ def on_message(client, userdata, message):
                         #esp1_conv["energy1"],
                         on_message.energy
                         ]
-                
-                print(f'file opened: {esp1_conv["temperature1"]} --- {esp1_conv["humidity1"]} --- {esp1_conv["power1"]} --- {tgl}')
-                #way to write to csv file
-                #if temperature1 and humidity1 and power1:
-                print(enumerate(reader))
+                print(row)
+                #print(f'file opened: {esp1_conv["temperature1"]} --- {esp1_conv["humidity1"]} --- {esp1_conv["power1"]} --- {tgl}')
+                # write to csv file
+                #print(enumerate(reader))
                 rowcount = sum(1 for num in reader)     #row count
                 if rowcount == 0:
                     writer.writerow(header)
@@ -133,7 +132,7 @@ templateData = {
 @cam.route("/capstone")
 @cam.route("/capstone/room1")
 def camera():
-    return render_template('room1_new.html', async_mode=socketio.async_mode, title='Room 1')
+    return render_template('room1.html', async_mode=socketio.async_mode, title='Room 1')
 
 @cam.route("/capstone/room2")
 def room2():
