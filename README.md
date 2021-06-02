@@ -1,3 +1,6 @@
+# NOTICE
+Please go to **main** branch
+
 # smartbuilding-iot
 Project for making Smart building IoT. Contains Show camera, temperature sensor, led auto/manual input
 
