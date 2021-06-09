@@ -18,12 +18,11 @@ Project for making Smart building IoT. Contains Show camera, temperature sensor,
    - Graphs: temperature and energy
 2. Account system
    - For full authorization in dashboard
-3. MQTT-based communication
-4. Database driven sensor values
+3. MQTT-based communication (Paho MQTT)
+4. csv-stored sensor values and visualization (amcharts 4)
 
 ## Planned Features
-1. Camera: human detection and counter. Counter used for device auto input (currently using dummy)
-2. Add energy management (energy, power, current sensor)
+1. Camera: person detection and counter. Counter used for device auto input (currently using dummy)
 ## Platform
 Python Flask + virtualenv. Code based on [[1](https://github.com/CoreyMSchafer/code_snippets/tree/master/Python/Flask_Blog),[3](https://www.shanelynn.ie/asynchronous-updates-to-a-webpage-with-flask-and-socket-io/)]
 # Setup 
