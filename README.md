@@ -48,10 +48,10 @@ The code uses Arduino IDE. For schematic, refer to this page [[2](https://random
 Use **python shell** ([source](https://github.com/CoreyMSchafer/code_snippets/issues/75))
 
 ```
-from flask_blog import create_app
+from flaskblog import create_app
 app = create_app()
 app.app_context().push()
-from flask_blog import db
+from flaskblog import db
 db.create_all()
 ```
 ## Run app
