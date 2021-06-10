@@ -35,6 +35,14 @@ cd <folder>
 pip install -r requirements.txt
 ```
 for example, i use `dashboard` as venv folder (without <>)
+
+## MQTT Setup
+go to ```credential.ini``` in root, Fill your MQTT broker. Besides fill the SECRET_KEY. For basic secret key, you can do (python shell):
+```
+import secrets
+secrets.token_hex(16)
+```
+Copy and paste the token to SECRET_KEY
 ## Publishing MQTT (dummy)
 run this file on python:
 ```
