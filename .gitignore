@@ -16,6 +16,7 @@ site.db
 mqtt_pub_test_group.py
 forms.py
 credential.ini
+flaskblog\static\sensor_room1.csv
 
 #text file
 webdevflask_bp.txt
