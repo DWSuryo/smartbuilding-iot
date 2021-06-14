@@ -17,6 +17,8 @@ mqtt_pub_test_group.py
 forms.py
 credential.ini
 flaskblog\static\sensor_room1.csv
+flaskblog\cam\camera.py
+flaskblog\cam\haarcascade_frontalface_dataset.xml
 
 #text file
 webdevflask_bp.txt
