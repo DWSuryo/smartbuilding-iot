@@ -1,6 +1,6 @@
 import os
 from flask import render_template, url_for, flash, redirect, request, abort, Response, Blueprint
-from flaskblog.cam.camera import VideoCamera
+#from flaskblog.cam.camera import VideoCamera
 from flaskblog import socketio
 import cv2
 import paho.mqtt.client as mqtt
