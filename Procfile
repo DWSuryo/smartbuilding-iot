@@ -1,1 +1,1 @@
-web:gunicorn -k eventlet run:app
+web: python run.py runserver 0.0.0.0:5000
