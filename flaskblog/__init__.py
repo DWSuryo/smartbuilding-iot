@@ -7,6 +7,7 @@ from flaskblog.config import Config
 from flask_socketio import SocketIO
 import eventlet
 import os.path
+from whitenoise import WhiteNoise
 
 eventlet.monkey_patch()
 socketio = SocketIO()   #updated
@@ -20,6 +21,14 @@ mail = Mail()
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(Config)
+    app.wsgi_app = WhiteNoise(app.wsgi_app)
+    my_static_folders = (
+        'static/'
+        'static/profile_pics/',
+        'static/tab/',
+    )
+    for static in my_static_folders:
+        app.wsgi_app.add_files(static)
 
     # if os.path.isfile('site.db'):
     #     print ("site.db exist")
