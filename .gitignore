@@ -4,11 +4,13 @@
 # caches
 __pycache__
 *.pyc
+.anvil
 
 # folders (venv related)
 include
 Scripts
 Lib
+heroku-buildpack-apt
 
 #files
 pyvenv.cfg
